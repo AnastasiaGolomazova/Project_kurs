@@ -1,0 +1,8 @@
+ {
+    "get_next": "getNext",
+    "set_next": "setNext",
+    "node_value_name": "data",
+    "node_ptr_name": "next",
+    "list_ptr_name":"head",
+    "path" :[75, 76, 92, 93, 92, 93, 87, 88]
+  }
