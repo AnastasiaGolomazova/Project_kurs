@@ -1,6 +1,8 @@
 import json
 from class1 import cpp_struct
 
+import main_algoritm
+
 with open ("Srs\Params.json") as f:
     data = json.load(f)
 
@@ -32,3 +34,6 @@ for i in readed_structures :
     for j in i.child:
         print(j.line_number,j.text)
         index+=1
+
+
+main_algoritm.master_mind(data["path"],readed_structures,data)
