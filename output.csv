@@ -1,1 +1,9 @@
-,Mamory,Environment,Line,Data_loss
+;Mamory;Environment;Line;Data_loss
+0;<1,2>;+<1,head>;71.0;
+1;;+<1,current>;72.0;
+2;;+<1,temp>;88.0;
+3;<2,3>;+<2,current>;89.0;
+4;;+<2,temp>;88.0;
+5;<3,4>;+<3,current>;89.0;
+6;<2,4>;;83.0;
+7;;+<2,current>;84.0;

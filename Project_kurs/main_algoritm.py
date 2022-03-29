@@ -41,11 +41,12 @@ def master_mind (vector_path, list_object, json_file): # основной мет
     set_next = json_file["set_next"]
 
     data = pandas.DataFrame({'Mamory':{}, 'Environment':{}, 'Line':{}, 'Data_loss':{}})
-
+    data = data.append({'Mamory':'<1,2>', 'Environment':f'+<{Environment[head]},{head}>', 'Line':vector_path[0], 'Data_loss':''}, ignore_index=True)
+   
     
     for index in range(len(vector_path)-1):
         line = lines[index]
-        number_line = vector_path[index]
+        number_line = vector_path[index+1]
         split = line.split(' ')
         row = {}
         if '*' in line: # ситуация, если мы объявляем указатель
@@ -53,12 +54,14 @@ def master_mind (vector_path, list_object, json_file): # основной мет
             if "=" in line:  # ситуация, если мы объявляем указатель и присваиваем значение
                 rigth_ptr = split[3][:-1]
                 Environment[left_ptr]=Environment[rigth_ptr]
-                row = {'Mamory':{}, 'Environment':{f'+<{Environment[left_ptr]},{left_ptr}>'}, 'Line':{number_line}, 'Data_loss':{}}
+                row = {'Mamory':'', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
+        elif 'delete' in line:
+            delete_node = split[1] # TODO доделать 
 
         elif "new" in line and head in line:
             Environment[head] = -1
             Mamory[-1] = -2
-            row = {'Mamory':{'<-1,-2>'}, 'Environment':{f'+<{Environment[left_ptr]},{left_ptr}>'}, 'Line':{number_line}, 'Data_loss':{}}
+            row = {'Mamory':'<-1,-2>', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
 
         elif get_next in line and set_next not in line: # ситуация, если мы приравниваем указатель к getNext другого указателя
             index = split[2].index('-')           
@@ -68,13 +71,13 @@ def master_mind (vector_path, list_object, json_file): # основной мет
             left_node = Environment[left_ptr]
             Mamory[left_node] = left_node + 1
 
-            row = {'Mamory':{f'<{left_node},{Mamory[left_node]}>'}, 'Environment':{f'+<{Environment[left_ptr]},{left_ptr}>'}, 'Line':{number_line}, 'Data_loss':{}}
+            row = {'Mamory':f'<{left_node},{Mamory[left_node]}>', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
 
         elif '=' in line:
             left_ptr= split[0]
             rigth_ptr = split[2][:-1]
             Environment[left_ptr] = Environment[rigth_ptr]
-            row = {'Mamory':{}, 'Environment':{f'+<{Environment[left_ptr]},{left_ptr}>'}, 'Line':{number_line}, 'Data_loss':{}}
+            row = {'Mamory':'', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
 
         elif get_next in line and set_next in line: # ситуация, когда есть get_next и set_next 
             split = line.split("->")
@@ -85,7 +88,7 @@ def master_mind (vector_path, list_object, json_file): # основной мет
             right_number = Environment[rigth_ptr]
             Mamory[number_node] = Mamory[right_number]
 
-            row = {'Mamory':{f'<{number_node},{Mamory[number_node]}>'}, 'Environment':{}, 'Line':{number_line}, 'Data_loss':{}}
+            row = {'Mamory':f'<{number_node},{Mamory[number_node]}>', 'Environment':'', 'Line':number_line, 'Data_loss':''}
 
         elif "new" in line and set_next in line:
             split = line.split("->")
@@ -94,12 +97,13 @@ def master_mind (vector_path, list_object, json_file): # основной мет
             Environment[left_ptr] = max_node
             Mamory[max_node] = max_node+1
 
-            row = {'Mamory':{f'<{max_node},{Mamory[max_node]}>'}, 'Environment':{}, 'Line':{number_line}, 'Data_loss':{}}
+            row = {'Mamory':f'<{max_node},{Mamory[max_node]}>', 'Environment':'', 'Line':number_line, 'Data_loss':''}
+        
+        if row!={}:
+            data = data.append (row, ignore_index=True)
 
-        data.append (row, ignore_index=True)
 
-
-    data.to_csv('output.csv')
+    data.to_csv('output.csv', sep=';')
 
 
 

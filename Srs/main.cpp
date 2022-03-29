@@ -81,6 +81,7 @@ public:
 			while (current->getNext() != nullptr) {
 				if (current->getNext()->getData() == data) {
 					temp->setNext(current->getNext());
+					current = temp;
 					break;
 				}
 				else{
