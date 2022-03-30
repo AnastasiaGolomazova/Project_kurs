@@ -2,7 +2,10 @@
 from asyncio.windows_events import NULL
 import pandas
 
-def find_object (list_objects, line_number): # список объектов среди которых ищем нужный блок кода и номер искомой строки
+# list_objects- список объектов среди которых ищем нужный блок кода
+# line_number - номер искомой строки 
+# find_object - нахождение по номеру строки соответствующую строку из кода
+def find_object (list_objects, line_number):
     for object in list_objects:
         if line_number >= object.line_number and line_number <= object.line_number+object.length:
             return object
@@ -12,15 +15,55 @@ def find_lines (vector_path, cpp_object): # путь программы, объ�
     lines_list = cpp_object.text.split('\n')
     result  = []
     for number in vector_path[1:]:
-        index = number - cpp_object.line_number -2
+        index = number - cpp_object.line_number
         clean_lines = lines_list[index].replace("\t", "")
         result.append(clean_lines)
-
-
     return result
 
-# путь и список объектов
-def master_mind (vector_path, list_object, json_file): # основной метод
+def find_leaks (Memory, data, head):
+    tree_list = []
+    current = head
+    while current in Memory:
+        tree_list.append(current)
+        if current not in Memory:
+            break
+        current = Memory[current]
+    
+    if len(tree_list) == len(Memory):
+        return ["leaks don't exists"]
+    else:
+        imposters = []
+        results = []
+        for node in Memory.keys():
+            if node not in tree_list:
+                imposters.append(node)
+        list_memory = data["Memory"].to_list()
+        for imposter in imposters:
+            for link in list_memory:
+                if link != "":
+                    two_elements = link.split(',')
+                    rigth_number = int(two_elements[1][:-1])
+                    if rigth_number == imposter:
+                        parent_node = int(two_elements[0][1:])
+                        for link in list_memory: 
+                           if link != "":
+                              two_elements = link.split(',')
+                              rigth = int(two_elements[1][:-1])
+                              left = int(two_elements[0][1:])
+                              if left==parent_node and rigth!= imposter:
+                                 line_number = list(data[data["Memory"] == link]["Line"].to_list())[0]
+                                 result = f"leak in string {line_number}"
+                                 results.append(result)
+                                 break
+    return results
+
+
+# vector_path- путь кода
+# list_object - список объектов
+# json_file - json файл
+# master_mind - основной алгоритм поиска утечки
+
+def master_mind (vector_path, list_object, json_file): 
     method = None
     for object in list_object:
         try:
@@ -31,7 +74,7 @@ def master_mind (vector_path, list_object, json_file): # основной мет
         raise Exception("method not found")
 
     lines = find_lines(vector_path, method)
-    Mamory = {1:2}
+    Memory = {1:2}
 
     head = json_file["list_ptr_name"]
 
@@ -40,10 +83,9 @@ def master_mind (vector_path, list_object, json_file): # основной мет
     get_next = json_file["get_next"]
     set_next = json_file["set_next"]
 
-    data = pandas.DataFrame({'Mamory':{}, 'Environment':{}, 'Line':{}, 'Data_loss':{}})
-    data = data.append({'Mamory':'<1,2>', 'Environment':f'+<{Environment[head]},{head}>', 'Line':vector_path[0], 'Data_loss':''}, ignore_index=True)
-   
-    
+    data = pandas.DataFrame({'Memory':{}, 'Environment':{}, 'Line':{}, 'Data_loss':{}})
+    data = data.append({'Memory':'<1,2>', 'Environment':f'+<{Environment[head]},{head}>', 'Line':vector_path[0], 'Data_loss':''}, ignore_index=True)
+     
     for index in range(len(vector_path)-1):
         line = lines[index]
         number_line = vector_path[index+1]
@@ -54,14 +96,19 @@ def master_mind (vector_path, list_object, json_file): # основной мет
             if "=" in line:  # ситуация, если мы объявляем указатель и присваиваем значение
                 rigth_ptr = split[3][:-1]
                 Environment[left_ptr]=Environment[rigth_ptr]
-                row = {'Mamory':'', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
+                row = {'Memory':'', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
         elif 'delete' in line:
             delete_node = split[1] # TODO доделать 
+            rigth_ptr = delete_node[:-1]
+            number_node = Environment[rigth_ptr]
+            row = {'Memory':'', 'Environment':f'-<{Environment[rigth_ptr]},{rigth_ptr}>', 'Line':number_line, 'Data_loss':''}
+            del Memory[number_node]
+            del Environment[rigth_ptr]
 
         elif "new" in line and head in line:
             Environment[head] = -1
-            Mamory[-1] = -2
-            row = {'Mamory':'<-1,-2>', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
+            Memory[-1] = -2
+            row = {'Memory':'<-1,-2>', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
 
         elif get_next in line and set_next not in line: # ситуация, если мы приравниваем указатель к getNext другого указателя
             index = split[2].index('-')           
@@ -69,15 +116,15 @@ def master_mind (vector_path, list_object, json_file): # основной мет
             left_ptr= split[0]
             Environment[left_ptr] = Environment[rigth_ptr]+1
             left_node = Environment[left_ptr]
-            Mamory[left_node] = left_node + 1
+            Memory[left_node] = left_node + 1
 
-            row = {'Mamory':f'<{left_node},{Mamory[left_node]}>', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
+            row = {'Memory':f'<{left_node},{Memory[left_node]}>', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
 
         elif '=' in line:
             left_ptr= split[0]
             rigth_ptr = split[2][:-1]
             Environment[left_ptr] = Environment[rigth_ptr]
-            row = {'Mamory':'', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
+            row = {'Memory':'', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
 
         elif get_next in line and set_next in line: # ситуация, когда есть get_next и set_next 
             split = line.split("->")
@@ -86,22 +133,28 @@ def master_mind (vector_path, list_object, json_file): # основной мет
             rigth_ptr = split[1][index+1:]
             number_node = Environment[left_ptr]
             right_number = Environment[rigth_ptr]
-            Mamory[number_node] = Mamory[right_number]
+            Memory[number_node] = Memory[right_number]
 
-            row = {'Mamory':f'<{number_node},{Mamory[number_node]}>', 'Environment':'', 'Line':number_line, 'Data_loss':''}
+            row = {'Memory':f'<{number_node},{Memory[number_node]}>', 'Environment':'', 'Line':number_line, 'Data_loss':''}
 
         elif "new" in line and set_next in line:
             split = line.split("->")
             left_ptr= split[0]
-            max_node = max(Mamory.values())
+            max_node = max(Memory.values())
             Environment[left_ptr] = max_node
-            Mamory[max_node] = max_node+1
+            Memory[max_node] = max_node+1
 
-            row = {'Mamory':f'<{max_node},{Mamory[max_node]}>', 'Environment':'', 'Line':number_line, 'Data_loss':''}
+            row = {'Memory':f'<{max_node},{Memory[max_node]}>', 'Environment':'', 'Line':number_line, 'Data_loss':''}
         
         if row!={}:
-            data = data.append (row, ignore_index=True)
-
+            data = data.append(row, ignore_index=True)
+    
+    results = find_leaks(Memory, data, head)
+    data = data.append({'Memory':''}, ignore_index=True)
+    
+    for result in results:
+        row = {'Memory':result}
+        data = data.append(row, ignore_index=True)
 
     data.to_csv('output.csv', sep=';')
 

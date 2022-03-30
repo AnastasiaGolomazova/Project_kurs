@@ -1,12 +1,12 @@
 import json
-from class1 import cpp_struct
+import cpp_struct
 
 import main_algoritm
 
-with open ("Srs\Params.json") as f:
+with open ("srs\params.json") as f:
     data = json.load(f)
 
-file = open ("Srs\main.cpp")
+file = open ("srs\main.cpp")
 text = file.read()
 
 readed_structures = [] # список структур для распознования классов и методов
@@ -18,7 +18,7 @@ while text != "":
     if "class" in line or  "struct" in line : # если в текущей строке нет ли совпадений с "class" и "struct", то
         end_struct_index = text.index('};')+2 # находим индекс последней строки (захватывая \n);
         line = text[:end_struct_index] # обрезаем текст от начала до конца структуры
-        struct = cpp_struct(i, line, "class") 
+        struct = cpp_struct(i, line, "class") # создаем объект 
         readed_structures.append(struct)
         i += line.count('\n')
         text = text[end_struct_index:]

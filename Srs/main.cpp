@@ -7,7 +7,7 @@ class Node {
 	Node* next;
 	int data;
 public:
-	Node(int data, Node* next = nullptr) {
+	Node(int data, Node* next = nullptr) { //*
 		this->data = data;
 		this->next = next;
 	}
@@ -16,7 +16,8 @@ public:
 	}
 	void setData(int data) {
 		this->data = data;
-	};
+	}
+	
 	Node* getNext() {
 		return next;
 	}
@@ -35,7 +36,7 @@ public:
 			head = new Node(data);
 		}
 		else {
-			Node* current = this->head;
+			Node* current = head;
 			while (current->getNext() != nullptr) {
 				current = current->getNext();
 			}
@@ -43,7 +44,6 @@ public:
 		}
 
 	}
-
 	void InsertNode(Node* node, int i) {
 		Node* current = head;
 		Node* temp;
@@ -67,7 +67,6 @@ public:
 			}
 		}
 	}
-
 	void delData(int data) {
 		Node* current = head;
 		Node* temp;
@@ -91,9 +90,8 @@ public:
 			}
 		}
 	}
-
 	Node* getNode(int num) {
-		Node* current = this->head;
+		Node* current = head;
 		while (current != nullptr)
 		{
 			if (current->getData() == num)
@@ -103,12 +101,31 @@ public:
 		}
 		return nullptr;
 	}
-
+	void movingNode(int i) {
+		Node* current = head;
+		Node* temp;
+		if (current == head){
+			head = current->getNext();
+			current = current->getNext();
+		}
+		j = 0;	
+		while (current->getNext() != nullptr){
+			if(i==j){
+				temp->setNext(current->getNext());
+				break;
+			}else {
+				j++;
+				temp = current;
+				current = current->getNext();
+			}	
+		}
+		current = NULL;
+        head = new Node(data);		
+	}
 	SinglyLinkedList() {
 		this->head = nullptr;
 	}
 	~SinglyLinkedList() {
-
 		Node* temp;
 		while (head != nullptr) {
 			temp = head;
@@ -118,7 +135,6 @@ public:
 		cout << "im working" << endl;
 	}
 };
-
 int main()
 {
 	SinglyLinkedList* list = new SinglyLinkedList();
