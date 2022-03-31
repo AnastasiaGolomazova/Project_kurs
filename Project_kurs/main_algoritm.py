@@ -10,9 +10,9 @@ def find_object (list_objects, line_number):
             return object
     raise Exception("object not found")
 
-# vector_path- путь по которому выполняем 
-# cpp_object - номер искомой строки 
-# find_lines - нахождение по номеру строки соответствующую строку из кода
+# vector_path- путь по которому выполняется алгоритм
+# cpp_object - метод, который рассматриваем 
+# find_lines - выборка из метода используемые строки
 def find_lines (vector_path, cpp_object):
     lines_list = cpp_object.text.split('\n')
     result  = []
@@ -22,6 +22,9 @@ def find_lines (vector_path, cpp_object):
         result.append(clean_lines)
     return result
 
+# Memory - модель представления связей между узлами
+# data - табличное представление данных, отслеживающее все изменения в Memory и Environment
+# find_leaks - поиск утечки памяти
 def find_leaks (Memory, data, head):
     tree_list = []
     current = head

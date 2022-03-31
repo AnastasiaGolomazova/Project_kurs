@@ -44,27 +44,23 @@ public:
 		}
 
 	}
-	void Example_2(int data, int i) {
+	void Example_2(Node* node, int i) {
 		Node* current = head;
-		Node* temp = new Node(data);
-		Node* current2;
+		Node* temp;
 		int j = 1;
 		if (i == 1)
 		{
-			temp->setNext(current);
-			head=temp;
+			current->setNext(node);
 		}
 		else {
 			while ((current->getNext() != nullptr)) {
 				if (i == j)
 				{
-					current2->setNext(temp);
-					temp->setNext(current);
+					current->setNext(node);
 					break;
 				}
 				else
 				{
-					current2 = current;
 					current = current->getNext();
 					j++;
 				}
@@ -76,14 +72,16 @@ public:
 		Node* temp;
 		if (current == node)
 		{
+			temp = head;
 			head = head->getNext();
-			delete current;
+			break;
 		}
 		else {
 			while (current->getNext() != nullptr) {
 				if (current->getNext()->getData() == data) {
 					temp->setNext(current->getNext());
-					delete current;
+					current = temp;
+					break;
 				}
 				else{
 					temp = current;
@@ -92,17 +90,37 @@ public:
 			}
 		}
 	}
-	void Example_4(int data) {
+	Node* Example_4(int num) {
+		Node* current = head;
+		while (current != nullptr)
+		{
+			if (current->getData() == num)
+				return current;
+			else
+				current = current->getNext();
+		}
+		return nullptr;
+	}
+	void Example_5(int i, int data) {
 		Node* current = head;
 		Node* temp;
-		if (head->getData() == data){
-			temp = head;
+		if (current == head){
+			head = current->getNext();
+			current = current->getNext();
 		}
 		j = 0;	
 		while (current->getNext() != nullptr){
-			current = current->getNext();
+			if(i==j){
+				temp->setNext(current->getNext());
+				break;
+			}else {
+				j++;
+				temp = current;
+				current = current->getNext();
+			}	
 		}
-		current->setNext(new Node(data));		
+		current = NULL;
+        head = new Node(data);		
 	}
 	SinglyLinkedList() {
 		this->head = nullptr;
