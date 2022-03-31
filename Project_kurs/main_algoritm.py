@@ -1,4 +1,3 @@
-
 from asyncio.windows_events import NULL
 import pandas
 
@@ -11,7 +10,10 @@ def find_object (list_objects, line_number):
             return object
     raise Exception("object not found")
 
-def find_lines (vector_path, cpp_object): # путь программы, объект в котором проводиться анализ (из find_object)
+# vector_path- путь по которому выполняем 
+# cpp_object - номер искомой строки 
+# find_lines - нахождение по номеру строки соответствующую строку из кода
+def find_lines (vector_path, cpp_object):
     lines_list = cpp_object.text.split('\n')
     result  = []
     for number in vector_path[1:]:
@@ -97,15 +99,15 @@ def master_mind (vector_path, list_object, json_file):
                 rigth_ptr = split[3][:-1]
                 Environment[left_ptr]=Environment[rigth_ptr]
                 row = {'Memory':'', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
-        elif 'delete' in line:
-            delete_node = split[1] # TODO доделать 
+        elif 'delete' in line: # ситуация, если мы хотим удалить указатель
+            delete_node = split[1] 
             rigth_ptr = delete_node[:-1]
             number_node = Environment[rigth_ptr]
             row = {'Memory':'', 'Environment':f'-<{Environment[rigth_ptr]},{rigth_ptr}>', 'Line':number_line, 'Data_loss':''}
             del Memory[number_node]
             del Environment[rigth_ptr]
 
-        elif "new" in line and head in line:
+        elif "new" in line and head in line: # ситуация, если мы хотим выделить новый узел для головного узла
             Environment[head] = -1
             Memory[-1] = -2
             row = {'Memory':'<-1,-2>', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
@@ -120,7 +122,7 @@ def master_mind (vector_path, list_object, json_file):
 
             row = {'Memory':f'<{left_node},{Memory[left_node]}>', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
 
-        elif '=' in line:
+        elif '=' in line: # ситуация, если мы хотим присвоить значение указателя к другому
             left_ptr= split[0]
             rigth_ptr = split[2][:-1]
             Environment[left_ptr] = Environment[rigth_ptr]
@@ -137,7 +139,7 @@ def master_mind (vector_path, list_object, json_file):
 
             row = {'Memory':f'<{number_node},{Memory[number_node]}>', 'Environment':'', 'Line':number_line, 'Data_loss':''}
 
-        elif "new" in line and set_next in line:
+        elif "new" in line and set_next in line: # ситуация, если мы хотим выделить новый узел и добавить его в список
             split = line.split("->")
             left_ptr= split[0]
             max_node = max(Memory.values())
@@ -149,7 +151,7 @@ def master_mind (vector_path, list_object, json_file):
         if row!={}:
             data = data.append(row, ignore_index=True)
     
-    results = find_leaks(Memory, data, head)
+    results = find_leaks(Memory, data, head) # поиск утечки
     data = data.append({'Memory':''}, ignore_index=True)
     
     for result in results:

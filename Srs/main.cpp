@@ -7,7 +7,7 @@ class Node {
 	Node* next;
 	int data;
 public:
-	Node(int data, Node* next = nullptr) { //*
+	Node(int data, Node* next = nullptr) { 
 		this->data = data;
 		this->next = next;
 	}
@@ -31,7 +31,7 @@ class SinglyLinkedList {
 	Node* head;
 
 public:
-	void pushBack(int data) {
+	void Example_1(int data) {
 		if (head == nullptr) {
 			head = new Node(data);
 		}
@@ -44,7 +44,7 @@ public:
 		}
 
 	}
-	void InsertNode(Node* node, int i) {
+	void Example_2(Node* node, int i) {
 		Node* current = head;
 		Node* temp;
 		int j = 1;
@@ -67,7 +67,7 @@ public:
 			}
 		}
 	}
-	void delData(int data) {
+	void Example_3(int data) {
 		Node* current = head;
 		Node* temp;
 		if (current == node)
@@ -90,7 +90,7 @@ public:
 			}
 		}
 	}
-	Node* getNode(int num) {
+	Node* Example_4(int num) {
 		Node* current = head;
 		while (current != nullptr)
 		{
@@ -101,7 +101,7 @@ public:
 		}
 		return nullptr;
 	}
-	void movingNode(int i) {
+	void Example_5(int i) {
 		Node* current = head;
 		Node* temp;
 		if (current == head){
@@ -137,20 +137,5 @@ public:
 };
 int main()
 {
-	SinglyLinkedList* list = new SinglyLinkedList();
-	list->pushBack(5);
-	list->pushBack(10);
-	list->pushBack(0);
-	list->pushBack(1);
-	list->pushBack(2);
-	//cout << list->getNode(2) << endl;
-	//cout << list->getNode(10) << endl;
-	//list->delData(list->getNode(2));
-	//list->delData(list->getNode(10));
-
-	//Node* node = new Node(2);
-
-	//list->InsertNode(node, 2);
-	//delete list;
 	return 0;
 }
