@@ -25,20 +25,20 @@ def find_lines (vector_path, cpp_object):
 # Memory - модель представления связей между узлами
 # data - табличное представление данных, отслеживающее все изменения в Memory и Environment
 # find_leaks - поиск утечки памяти
-def find_leaks (Memory, data, head):
+def find_leaks (Memory, data, Environment, head):
     tree_list = []
-    current = head
+    results = []
+    current = Environment[head]
     while current in Memory:
         tree_list.append(current)
         if current not in Memory:
             break
         current = Memory[current]
-    
-    if len(tree_list) == len(Memory):
+    Environment_leaks = data["Environment"].to_list()
+    if len(tree_list) == len(Memory) and len(results) ==0:
         return ["leaks don't exists"]
     else:
         imposters = []
-        results = []
         for node in Memory.keys():
             if node not in tree_list:
                 imposters.append(node)
@@ -60,6 +60,15 @@ def find_leaks (Memory, data, head):
                                  result = f"leak in string {line_number}"
                                  results.append(result)
                                  break
+    if Environment[head] != 1 :
+        for item in Environment_leaks:
+            if head in item:
+                line_number = list(data[data["Environment"] == item]["Line"].to_list())
+                two_elements = item.split(',')
+                left_number = int(two_elements[0][2:])
+                if len(line_number) != 0 and left_number != 1:
+                    result = f"leak in string {line_number}"
+                    results.append(result)
     return results
 
 
@@ -67,7 +76,6 @@ def find_leaks (Memory, data, head):
 # list_object - список объектов
 # json_file - json файл
 # master_mind - основной алгоритм поиска утечки
-
 def master_mind (vector_path, list_object, json_file): 
     method = None
     for object in list_object:
@@ -88,8 +96,8 @@ def master_mind (vector_path, list_object, json_file):
     get_next = json_file["get_next"]
     set_next = json_file["set_next"]
 
-    data = pandas.DataFrame({'Memory':{}, 'Environment':{}, 'Line':{}, 'Data_loss':{}})
-    data = data.append({'Memory':'<1,2>', 'Environment':f'+<{Environment[head]},{head}>', 'Line':vector_path[0], 'Data_loss':''}, ignore_index=True)
+    data = pandas.DataFrame({'Memory':{}, 'Environment':{}, 'Line':{}})
+    data = data.append({'Memory':'<1,2>', 'Environment':f'+<{Environment[head]},{head}>', 'Line':vector_path[0]}, ignore_index=True)
      
     for index in range(len(vector_path)-1):
         line = lines[index]
@@ -97,23 +105,29 @@ def master_mind (vector_path, list_object, json_file):
         split = line.split(' ')
         row = {}
         if '*' in line: # ситуация, если мы объявляем указатель
-            left_ptr = split[1]
-            if "=" in line:  # ситуация, если мы объявляем указатель и присваиваем значение
-                rigth_ptr = split[3][:-1]
-                Environment[left_ptr]=Environment[rigth_ptr]
-                row = {'Memory':'', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
+            if "=" in line: # ситуация, если мы объявляем указатель и присваиваем значение
+                left_ptr = split[1] 
+                if "new" in line:
+                    max_node = max(Memory.values())
+                    Environment[left_ptr] = max_node
+                    Memory[max_node] = max_node+1
+                    row = {'Memory':f'<{max_node},{Memory[max_node]}>', 'Environment':'', 'Line':number_line}
+                else:
+                    rigth_ptr = split[3][:-1]
+                    Environment[left_ptr]=Environment[rigth_ptr]
+                    row = {'Memory':'', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line}
         elif 'delete' in line: # ситуация, если мы хотим удалить указатель
             delete_node = split[1] 
             rigth_ptr = delete_node[:-1]
             number_node = Environment[rigth_ptr]
-            row = {'Memory':'', 'Environment':f'-<{Environment[rigth_ptr]},{rigth_ptr}>', 'Line':number_line, 'Data_loss':''}
+            row = {'Memory':'', 'Environment':f'-<{Environment[rigth_ptr]},{rigth_ptr}>', 'Line':number_line}
             del Memory[number_node]
             del Environment[rigth_ptr]
 
         elif "new" in line and head in line: # ситуация, если мы хотим выделить новый узел для головного узла
             Environment[head] = -1
             Memory[-1] = -2
-            row = {'Memory':'<-1,-2>', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
+            row = {'Memory':'<-1,-2>', 'Environment':f'+<{Environment[head]},{head}>', 'Line':number_line}
 
         elif get_next in line and set_next not in line: # ситуация, если мы приравниваем указатель к getNext другого указателя
             index = split[2].index('-')           
@@ -123,13 +137,13 @@ def master_mind (vector_path, list_object, json_file):
             left_node = Environment[left_ptr]
             Memory[left_node] = left_node + 1
 
-            row = {'Memory':f'<{left_node},{Memory[left_node]}>', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
+            row = {'Memory':f'<{left_node},{Memory[left_node]}>', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line}
 
         elif '=' in line: # ситуация, если мы хотим присвоить значение указателя к другому
             left_ptr= split[0]
             rigth_ptr = split[2][:-1]
             Environment[left_ptr] = Environment[rigth_ptr]
-            row = {'Memory':'', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line, 'Data_loss':''}
+            row = {'Memory':'', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line}
 
         elif get_next in line and set_next in line: # ситуация, когда есть get_next и set_next 
             split = line.split("->")
@@ -140,7 +154,7 @@ def master_mind (vector_path, list_object, json_file):
             right_number = Environment[rigth_ptr]
             Memory[number_node] = Memory[right_number]
 
-            row = {'Memory':f'<{number_node},{Memory[number_node]}>', 'Environment':'', 'Line':number_line, 'Data_loss':''}
+            row = {'Memory':f'<{number_node},{Memory[number_node]}>', 'Environment':'', 'Line':number_line}
 
         elif "new" in line and set_next in line: # ситуация, если мы хотим выделить новый узел и добавить его в список
             split = line.split("->")
@@ -149,12 +163,12 @@ def master_mind (vector_path, list_object, json_file):
             Environment[left_ptr] = max_node
             Memory[max_node] = max_node+1
 
-            row = {'Memory':f'<{max_node},{Memory[max_node]}>', 'Environment':'', 'Line':number_line, 'Data_loss':''}
+            row = {'Memory':f'<{max_node},{Memory[max_node]}>', 'Environment':'', 'Line':number_line}
         
         if row!={}:
             data = data.append(row, ignore_index=True)
     
-    results = find_leaks(Memory, data, head) # поиск утечки
+    results = find_leaks(Memory, data, Environment, head) # поиск утечки
     data = data.append({'Memory':''}, ignore_index=True)
     
     for result in results:

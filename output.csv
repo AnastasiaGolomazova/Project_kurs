@@ -1,11 +1,15 @@
-;Memory;Environment;Line;Data_loss
-0;<1,2>;+<1,head>;70.0;
-1;;+<1,current>;71.0;
-2;;+<1,temp>;87.0;
-3;<2,3>;+<2,current>;88.0;
-4;;+<2,temp>;87.0;
-5;<3,4>;+<3,current>;88.0;
-6;<2,4>;;82.0;
-7;;+<2,current>;83.0;
-8;;;;
-9;leak in string 82.0;;;
+;Memory;Environment;Line
+0;<1,2>;+<1,head>;48.0
+1;;+<1,current>;49.0
+2;<2,3>;;50.0
+3;;+<1,current2>;70.0
+4;<2,3>;+<2,current>;71.0
+5;<2,3>;+<2,head>;72.0
+6;;+<2,current2>;70.0
+7;<3,4>;+<3,current>;71.0
+8;<3,4>;+<3,head>;72.0
+9;<4,5>;+<4,head>;65.0
+10;;;
+11;leak in string [72.0];;
+12;leak in string [72.0];;
+13;leak in string [65.0];;
