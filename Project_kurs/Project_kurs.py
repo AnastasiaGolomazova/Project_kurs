@@ -6,7 +6,7 @@ import main_algoritm
 with open ("srs\params.json") as f:
     data = json.load(f)
 
-file = open ("srs\main1.cpp")
+file = open ("srs\main2.cpp")
 text = file.read()
 
 readed_structures = [] # список структур для распознования классов и методов
@@ -42,6 +42,6 @@ for i in readed_structures :
 # поиск утечек памяти и их вывод в файл "output" (можно открыть файл "output" через exel)
 
 #main_algoritm.master_mind(data["path_ex1"],readed_structures,data)
-main_algoritm.master_mind(data["path_ex2"],readed_structures,data)
+#main_algoritm.master_mind(data["path_ex2"],readed_structures,data)
 #main_algoritm.master_mind(data["path_ex3"],readed_structures,data)
-#main_algoritm.master_mind(data["path_ex4"],readed_structures,data)
+main_algoritm.master_mind(data["path_ex4"],readed_structures,data)

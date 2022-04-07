@@ -42,7 +42,6 @@ public:
 			}
 			current->setNext(new Node(data));
 		}
-
 	}
 	void Example_2(int data, int i) {
 		Node* current = head;
@@ -52,7 +51,7 @@ public:
 		if (i == 1)
 		{
 			temp->setNext(current);
-			head=temp;
+			head = temp;
 		}
 		else {
 			while ((current->getNext() != nullptr)) {
@@ -76,8 +75,9 @@ public:
 		Node* temp;
 		if (current == node)
 		{
+			temp = head;
 			head = head->getNext();
-			delete current;
+			delete temp;
 		}
 		else {
 			while (current->getNext() != nullptr) {
@@ -102,7 +102,7 @@ public:
 		while (current->getNext() != nullptr){
 			current = current->getNext();
 		}
-		current->setNext(new Node(data));		
+		current->setNext(new Node(data));	
 	}
 	SinglyLinkedList() {
 		this->head = nullptr;

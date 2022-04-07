@@ -81,17 +81,18 @@ public:
 		if (current == node)
 		{
 			head = head->getNext();
-			delete current;
 		}
 		else {
 			while (current->getNext() != nullptr) {
 				if (current->getNext()->getData() == data) {
 					temp->setNext(current->getNext());
 					delete current;
+					head = head->getNext();
 				}
 				else{
 					temp = current;
 					current = current->getNext();
+					head = head->getNext();
 				}
 			}
 		}
@@ -101,12 +102,14 @@ public:
 		Node* temp;
 		if (head->getData() == data){
 			temp = head;
+			head = head->getNext();
 		}
 		j = 0;	
 		while (current->getNext() != nullptr){
 			current = current->getNext();
 		}
-		current->setNext(new Node(data));		
+		current->setNext(new Node(data));
+		head = head->getNext();		
 	}
 	SinglyLinkedList() {
 		this->head = nullptr;

@@ -28,14 +28,20 @@ def find_lines (vector_path, cpp_object):
 def find_leaks (Memory, data, Environment, head):
     tree_list = []
     results = []
+    if head not in Environment:
+        return ["head don't exist"]
     current = Environment[head]
     while current in Memory:
         tree_list.append(current)
         if current not in Memory:
             break
+        if Memory[current] in Memory:
+            if Memory[Memory[current]] == current:
+              break
         current = Memory[current]
+
     Environment_leaks = data["Environment"].to_list()
-    if len(tree_list) == len(Memory) and len(results) ==0:
+    if len(tree_list) == len(Memory) and len(results) == 0:
         return ["leaks don't exists"]
     else:
         imposters = []
@@ -47,8 +53,9 @@ def find_leaks (Memory, data, Environment, head):
             for link in list_memory:
                 if link != "":
                     two_elements = link.split(',')
+                    left_number = int(two_elements[0][1:])
                     rigth_number = int(two_elements[1][:-1])
-                    if rigth_number == imposter:
+                    if rigth_number == imposter or left_number == imposter:
                         parent_node = int(two_elements[0][1:])
                         for link in list_memory: 
                            if link != "":
@@ -59,7 +66,7 @@ def find_leaks (Memory, data, Environment, head):
                                  line_number = list(data[data["Memory"] == link]["Line"].to_list())[0]
                                  result = f"leak in string {line_number}"
                                  results.append(result)
-                                 break
+                                 break                    
     if Environment[head] != 1 :
         for item in Environment_leaks:
             if head in item:
@@ -70,7 +77,6 @@ def find_leaks (Memory, data, Environment, head):
                     result = f"leak in string {line_number}"
                     results.append(result)
     return results
-
 
 # vector_path- путь кода
 # list_object - список объектов
@@ -87,6 +93,7 @@ def master_mind (vector_path, list_object, json_file):
         raise Exception("method not found")
 
     lines = find_lines(vector_path, method)
+
     Memory = {1:2}
 
     head = json_file["list_ptr_name"]
@@ -108,10 +115,12 @@ def master_mind (vector_path, list_object, json_file):
             if "=" in line: # ситуация, если мы объявляем указатель и присваиваем значение
                 left_ptr = split[1] 
                 if "new" in line:
-                    max_node = max(Memory.values())
-                    Environment[left_ptr] = max_node
-                    Memory[max_node] = max_node+1
-                    row = {'Memory':f'<{max_node},{Memory[max_node]}>', 'Environment':'', 'Line':number_line}
+                    Environment[left_ptr] = -10
+                    Memory[-10] = -11
+                    #max_node = max(Memory.values())
+                    #Environment[left_ptr] = max_node
+                    #Memory[max_node] = max_node+1
+                    row = {'Memory':f'<{-10},{Memory[-10]}>', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line}
                 else:
                     rigth_ptr = split[3][:-1]
                     Environment[left_ptr]=Environment[rigth_ptr]
@@ -125,9 +134,10 @@ def master_mind (vector_path, list_object, json_file):
             del Environment[rigth_ptr]
 
         elif "new" in line and head in line: # ситуация, если мы хотим выделить новый узел для головного узла
-            Environment[head] = -1
-            Memory[-1] = -2
-            row = {'Memory':'<-1,-2>', 'Environment':f'+<{Environment[head]},{head}>', 'Line':number_line}
+             if checkNULL(lines) == False: # специальная проверка для методов, которые создают новый список узлов
+                 Environment[head] = -1
+                 Memory[-1] = -2
+                 row = {'Memory':'<-1,-2>', 'Environment':f'+<{Environment[head]},{head}>', 'Line':number_line}
 
         elif get_next in line and set_next not in line: # ситуация, если мы приравниваем указатель к getNext другого указателя
             index = split[2].index('-')           
@@ -136,10 +146,9 @@ def master_mind (vector_path, list_object, json_file):
             Environment[left_ptr] = Environment[rigth_ptr]+1
             left_node = Environment[left_ptr]
             Memory[left_node] = left_node + 1
-
             row = {'Memory':f'<{left_node},{Memory[left_node]}>', 'Environment':f'+<{Environment[left_ptr]},{left_ptr}>', 'Line':number_line}
 
-        elif '=' in line: # ситуация, если мы хотим присвоить значение указателя к другому
+        elif '=' in line and "==" not in line: # ситуация, если мы хотим присвоить значение указателя к другому
             left_ptr= split[0]
             rigth_ptr = split[2][:-1]
             Environment[left_ptr] = Environment[rigth_ptr]
@@ -164,6 +173,16 @@ def master_mind (vector_path, list_object, json_file):
             Memory[max_node] = max_node+1
 
             row = {'Memory':f'<{max_node},{Memory[max_node]}>', 'Environment':'', 'Line':number_line}
+
+        elif set_next in line: # ситуация, если мы хотим выделить новый узел и добавить его в список
+            split = line.split("->")
+            left_ptr= split[0]
+            index = split[1].index('(')
+            rigth_ptr = split[1][index+1:-2]
+            number_node = Environment[left_ptr]
+            right_number = Environment[rigth_ptr]
+            Memory[number_node] = right_number
+            row = {'Memory':f'<{number_node},{Memory[number_node]}>', 'Environment':'', 'Line':number_line}
         
         if row!={}:
             data = data.append(row, ignore_index=True)
@@ -176,6 +195,13 @@ def master_mind (vector_path, list_object, json_file):
         data = data.append(row, ignore_index=True)
 
     data.to_csv('output.csv', sep=';')
+
+def checkNULL (lines):
+    for line in lines:
+        if "head == nullptr" in line or "head == NULL" in line:
+            return True
+    
+    return False
 
 
 
