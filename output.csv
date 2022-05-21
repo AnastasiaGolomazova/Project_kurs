@@ -1,13 +1,12 @@
-;Memory;Environment;Line
-0;<1,2>;+<1,head>;96.0
-1;;+<1,current>;97.0
-2;<2,3>;+<2,current>;104.0
-3;<3,4>;+<3,current>;104.0
-4;<4,5>;+<4,current>;104.0
-5;<5,6>;;106.0
-6;<1,5>;;107.0
-7;;;
-8;leak in string 107.0;;
-9;leak in string 104.0;;
-10;leak in string 104.0;;
-11;leak in string 104.0;;
+;Memory;Environment;Line;Current line;Message
+0;<1,None>;+<1,head>;77.0;"Node* current = head;";
+1;;+<1,current>;78.0;"Node* current = head;";
+2;;;79.0;"Node* temp;";
+3;;+<1,temp>;90.0;"temp = current;";
+4;<1,2>;+<2,current>;91.0;"current = current->getNext();";
+5;<2,None>;+<2,current>;91.0;"current = current->getNext();";
+6;;+<2,temp>;90.0;"temp = current;";
+7;<2,3>;+<3,current>;91.0;"current = current->getNext();";
+8;<3,None>;+<3,current>;91.0;"current = current->getNext();";
+9;;-<2,temp>;87.0;"delete temp;";
+10;;;;;
