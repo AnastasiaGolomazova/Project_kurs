@@ -78,7 +78,7 @@ public:
 	void Example_3(int data) {
 		Node* current = head;
 		Node* temp;
-		if (current == node)
+		if (current->getData() == data)
 		{
 			head = head->getNext();
 		}

@@ -50,7 +50,7 @@ public:
 	void Example_2(int data, int i) {
 		Node* current = head;
 		Node* temp = new Node(data);
-		Node* current2;
+		Node* current2 = new Node(data);
 		int j = 1;
 		if (i == 1)
 		{
@@ -78,7 +78,7 @@ public:
 	void Example_3(int data) {
 		Node* current = head;
 		Node* temp;
-		if (current == node)
+		if (current->getData() == data)
 		{
 			head = head->getNext();
 			delete current;
@@ -104,7 +104,7 @@ public:
 			temp = head;
 			head = head->getNext();
 		}
-		j = 0;	
+		int j = 0;	
 		while (current->getNext() != nullptr){
 			current = current->getNext();
 		}

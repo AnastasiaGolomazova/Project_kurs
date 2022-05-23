@@ -1,12 +1,12 @@
 import json
 from cpp_struct import cpp_struct
-
+import pandas
 import main_algoritm
 
 with open ("srs\params.json") as f:
     data = json.load(f)
 
-file = open ("srs\main2.cpp")
+file = open (f"srs\{data['text_file']}")
 text = file.read()
 
 readed_structures = [] # список структур для распознования классов и методов
@@ -40,11 +40,21 @@ for i in readed_structures :
         index+=1
 
 # поиск утечек памяти и их вывод в файл "output" (можно открыть файл "output" через exel)
+analysator = main_algoritm.Analysiator(data, readed_structures)
 
-#main = main_algoritm.Analysiator(data, data["path_ex1"],readed_structures)
-#main = main_algoritm.Analysiator(data, data["path_ex2"],readed_structures)
-main = main_algoritm.Analysiator(data, data["path_ex3"],readed_structures)
-#main = main_algoritm.Analysiator(data, data["path_ex4"],readed_structures)
+analysator.set_data("path_ex1")
+analysator.analysis()
 
-main.analysis()
-main.data.to_csv('output.csv', sep=';')
+analysator.set_data("path_ex2")
+analysator.analysis()
+
+analysator.set_data("path_ex3")
+analysator.analysis()
+
+analysator.set_data("path_ex4")
+analysator.analysis()
+
+data = pandas.DataFrame({'Memory':[], 'Environment':[], 'Line':[], 'Current line':[], 'Message': []})
+for table in analysator.global_data.values():
+    data = data.append(table)
+data.to_csv('output.csv', sep=';')

@@ -99,7 +99,7 @@ public:
 		if (head->getData() == data){
 			head->setNext(current);
 		}
-		j = 0;	
+		int j = 0;	
 		while (current->getNext() != nullptr){
 			current = current->getNext();
 		}
