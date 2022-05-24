@@ -1,12 +1,14 @@
  {
     "get_next": "getNext",
     "set_next": "setNext",
+    "get_prev": "getPrev",
+    "set_prev": "setPrev",
     "node_value_name": "data",
     "node_ptr_name": "next",
     "list_ptr_name":"head",
-    "text_file": "main4.cpp",
-    "path_ex1" :[34, 40, 42, 43, 44, 46, 47],
-    "path_ex2" :[50, 51, 52, 53, 71, 72, 64, 65, 66],
-    "path_ex3" :[78, 79, 80, 94, 95, 89, 90, 91],
-    "path_ex4" :[100, 101, 102, 104, 105, 109, 109, 111, 112, 113, 114]
+    "text_file": "main1.cpp",
+    "path_ex1" :[34, 35, 36, 37],
+    "path_ex2" :[48, 49, 50, 51, 55, 56, 57],
+    "path_ex3" :[78, 79, 80, 83],
+    "path_ex4" :[100, 101, 102, 104, 105, 109, 109, 109, 111, 112]
   }

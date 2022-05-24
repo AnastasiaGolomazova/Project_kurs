@@ -2,6 +2,7 @@ from asyncio.windows_events import NULL
 from msilib.schema import Environment
 from black import validate_regex
 import pandas
+from node import Node
 
 class Analysiator():
 
@@ -13,6 +14,8 @@ class Analysiator():
         self.head = json["list_ptr_name"]
         self.get_next = json["get_next"]
         self.set_next = json["set_next"]
+        self.get_prev = json["get_prev"]
+        self.set_prev = json["set_prev"]
         self.list_object = list_object
         
 
@@ -36,7 +39,7 @@ class Analysiator():
         if self.checkNULL(self.lines) == False: # специальная проверка для методов, которые создают новый список узлов
         
             self.environment = {self.head:1}
-            self.memory = {1:None}
+            self.memory = {1:Node(1)}
             self.log('<1,None>', f'+<{self.environment[self.head]},{self.head}>')
         else:
             self.environment = {}
@@ -50,10 +53,10 @@ class Analysiator():
 
         numbers = self.data['Line'].to_list()
         if (len(numbers) == 0):
-            data = {'Memory':memory, 'Environment':environment, 'Line':self.number,'Current line':self.line, 'Message': message}
+            data = {'Memory':str(memory), 'Environment':environment, 'Line':self.number,'Current line':self.line, 'Message': message}
             self.data = self.data.append(data, ignore_index=True)
         elif (self.data['Line'].to_list()[-1]!=self.number or canDublicate):
-            data = {'Memory':memory, 'Environment':environment, 'Line':self.number,'Current line':self.line, 'Message': message}
+            data = {'Memory':str(memory), 'Environment':environment, 'Line':self.number,'Current line':self.line, 'Message': message}
             self.data = self.data.append(data, ignore_index=True)
 
     def check_self_link(self):
@@ -89,19 +92,22 @@ class Analysiator():
 
             line = self.line
 
-            if self.contains(['*', "="]): # ситуация, если мы объявляем указатель and ситуация, если мы объявляем указатель и присваиваем значение
+            # ситуация, если мы объявляем указатель and ситуация, 
+            # если мы объявляем указатель и присваиваем значение
+            if self.contains(['*', "="]): 
                 ptrs = self.get_ptrs(' ', 1, 3)
 
                 if self.contains(["new"]):
                     environment[ptrs.left] = new_num
-                    memory[new_num] = None
-                    self.log(f'<{new_num},{memory[new_num]}>', f'+<{environment[ptrs.left]},{ptrs.left}>')
+                    memory[new_num] = Node(new_num)
+                    self.log(f'<{new_num},{memory[new_num].number}>', f'+<{environment[ptrs.left]},{ptrs.left}>')
                     new_num+=1
                 else:
                     environment[ptrs.left] = environment[ptrs.right[:-1]]
                     self.log(environment = f'+<{environment[ptrs.left]},{ptrs.left}>')
 
-            elif self.contains(['delete']): # ситуация, если мы хотим удалить указатель
+            # ситуация, если мы хотим удалить указатель
+            elif self.contains(['delete']): 
                 right = self.get_ptrs(' ', None, 1).right[:-1]
                 left_number = environment[right]
 
@@ -114,87 +120,99 @@ class Analysiator():
                         environment[ptr] = None
                 del environment[right]
                 
-
-            elif self.contains(['new', head]): # ситуация, если мы хотим выделить новый узел для головного узла
+            # ситуация, если мы хотим выделить новый узел для головного узла
+            elif self.contains(['new', head]): 
                 #if self.checkNULL(self.lines) == False: # специальная проверка для методов, которые создают новый список узлов
                 environment[head] = new_num
-                memory[new_num] = None
-                self.log(f'<{new_num},{memory[new_num]}>', f'+<{environment[head]},{head}>')
+                memory[new_num] = Node(new_num)
+                self.log(f'<{new_num},{memory[new_num].number}>', f'+<{environment[head]},{head}>')
                 new_num+=1
 
-            elif self.contains(['new', self.set_next]): # ситуация, если мы хотим выделить новый узел и добавить его в список
+            # ситуация, если мы хотим выделить новый узел и добавить его в список
+            elif self.contains(['new', self.set_next]): 
                 left = self.get_ptrs('->', 0, None).left
                 #max_node = max(Memory.values()) ПОДУМАТЬ
                 #if Environment[left_ptr] == None:
                 old_ptr = environment[left]
                 environment[left] = new_num
-                memory[old_ptr] = new_num
-                memory[new_num] = None
+                node = Node(new_num)
+                memory[old_ptr].next = node
+                memory[new_num] = node
 
-                self.log(memory = f'<{new_num},{memory[new_num]}>')         
+                self.log(memory = memory[new_num])         
 
-                self.log(memory = f'<{old_ptr},{new_num}>', canDublicate= True)    
+                self.log(memory = memory[old_ptr], canDublicate= True)    
 
                 new_num +=1
-            ######         
-            elif self.contains(['new']): # ситуация, если мы хотим выделить новый узел для головного узла
+
+            # ситуация, если мы хотим выделить новый узел для головного узла
+            elif self.contains(['new']): 
                 left = self.get_ptrs(' ', 0, None).left
                 environment[left] = new_num
-                memory[new_num] = None
+                memory[new_num] = Node(new_num)
 
-                ## откуда old?
-                self.log(f'<{new_num},{memory[new_num]}>', f'+<{environment[left]},{left}>')
+                self.log(f'<{new_num},{memory[new_num].number}>', f'+<{environment[left]},{left}>')
                 new_num += 1
                     
-            elif self.contains([self.get_next]) and self.contains([self.set_next], True): # ситуация, если мы приравниваем указатель к getNext другого указателя
+            # ситуация, если мы приравниваем указатель к getNext другого указателя
+            elif self.contains([self.get_next]) and self.contains([self.set_next], True): 
                 ptrs = self.get_ptrs(' ', 0, None)
                 #index = split[2].index('-')           
                 #right = split[2][:index]
                 left= ptrs.left
                 n = environment[left]
+                node = Node(new_num)
                 if n is not None:
-                    if memory[n] == None:
+                    if memory[n].next == None:
                         environment[left] = new_num
-                        memory[n] = new_num
-                        memory[new_num] = None
-                        self.log(f'<{n},{memory[n]}>', f'+<{environment[left]},{left}>', canDublicate=True)
-                        self.log(f'<{new_num},{memory[new_num]}>', f'+<{environment[left]},{left}>', canDublicate=True)
+                        memory[n].next = node
+                        memory[new_num] = node
+                        self.log(memory[n], f'+<{environment[left]},{left}>', canDublicate=True)
+                        self.log(memory[new_num], f'+<{environment[left]},{left}>', canDublicate=True)
                         new_num += 1
                     else:
-                        environment[left] = memory[n]
+                        environment[left] = memory[n].number
                         n = environment[left]
-                        self.log(f'<{n},{memory[n]}>', f'+<{environment[left]},{left}>', canDublicate=True)
+                        self.log(memory[n], f'+<{environment[left]},{left}>', canDublicate=True)
                 else:
                     environment[left] = new_num
-                    memory[n] = new_num
-                    memory[new_num] = None
-                    self.log(f'<{n},{memory[n]}>', f'+<{environment[left]},{left}>', canDublicate=True)
-                    self.log(f'<{new_num},{memory[new_num]}>', f'+<{environment[left]},{left}>', canDublicate=True)
+                    memory[n].next = node
+                    memory[new_num] = node
+                    self.log(memory[n], f'+<{environment[left]},{left}>', canDublicate=True)
+                    self.log(memory[new_num], f'+<{environment[left]},{left}>', canDublicate=True)
                     new_num += 1
 
-            elif self.contains(['=']) and self.contains(["=="], True): # ситуация, если мы хотим присвоить значение указателя к другому
+            # ситуация, если мы хотим присвоить значение указателя к другому
+            elif self.contains(['=']) and self.contains(["=="], True): 
                 ptrs = self.get_ptrs(' ', 0, 2)
                 environment[ptrs.left] = environment[ptrs.right[:-1]]
 
                 self.log(environment = f'+<{environment[ptrs.left]},{ptrs.left}>')
 
-            elif self.contains([self.get_next, self.set_next]): # ситуация, когда есть get_next и set_next 
+            # ситуация, когда есть get_next и set_next 
+            elif self.contains([self.get_next, self.set_next]): 
                 ptrs = self.get_ptrs("->", 0, 1)
                 index = ptrs.right.index('(')
                 left_number = environment[ptrs.left]
                 right_number = environment[ptrs.right[index + 1:]]
                 memory[left_number] = memory[right_number]
 
-                self.log(memory = f'<{left_number},{memory[left_number]}>')
+                self.log(memory = f'<{left_number},{memory[left_number].number}>')
 
-            elif self.contains([self.set_next]): # ситуация, если мы хотим выделить новый узел и добавить его в список
+            # ситуация, если мы хотим выделить новый узел и добавить его в список
+            elif self.contains([self.set_next]): 
                 ptrs = self.get_ptrs("->", 0, 1)
                 index = ptrs.right.index('(')
                 left_number = environment[ptrs.left]
                 right_number = environment[ptrs.right[index+1:-2]]
-                memory[left_number] = right_number
+                memory[left_number].next = self.find(right_number)
 
-                self.log(memory = f'<{left_number},{memory[left_number]}>')
+                self.log(memory = f'<{left_number},{memory[left_number].number}>')
+
+            #elif self.contains([self.get_prev, "="]):
+                #ptrs_main = self.get_ptrs("=", 0, 1)
+                #ptrs_right = self.get_ptrs("=", 0, 1)            
+
 
             self.log()
 
@@ -224,25 +242,31 @@ class Analysiator():
             return ["head don't exist"]
             
         head_num = environment[head]
-        current = environment[head]
+        current_number = environment[head]
         step = 0
-        while current in memory:
-            tree_list.append(current)
-            if current not in memory:
+        while self.find(current_number) is not None:
+            tree_list.append(current_number)
+            if self.find(current_number) is None:
                 break
-            if memory[current] in memory:
-                if memory[memory[current]] == current:
+            #if memory[current_number] in memory:
+            if memory[current_number] is not None:
+                if memory[current_number].next is not None:
+                    if memory[current_number].next.number == current_number:
+                        break
+                else:
                     break
-            current = memory[current]
+            else:
+                break
+            current_number = memory[current_number].next.number
             step += 1
             if step > 1000:
                 break
 
         Environment_leaks = data["Environment"].to_list()
         imposters = []
-        for node in memory.keys():
-            if node not in tree_list and node != head_num:
-                imposters.append(node)
+        for node_number in memory.keys():
+            if node_number not in tree_list and node_number != head_num:
+                imposters.append(node_number)
         list_memory = data["Memory"].to_list()
         for imposter in imposters:
             exists = False
@@ -290,7 +314,11 @@ class Analysiator():
 
         return self.remove_dublicate(results, vector_start)
 
-        
+    def find(self, number):
+        for node in self.memory:
+            if node == number:
+                return self.memory[node]
+        return None
 
     def checkNULL (self, lines):
         for line in lines:
