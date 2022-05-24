@@ -1,15 +1,17 @@
-#include <iostream>
+﻿#include <iostream>
 #include <string>
 
 using namespace std;
 
 class Node {
 	Node* next;
+	Node* prev;
 	int data;
 public:
-	Node(int data, Node* next = nullptr) { 
+	Node(int data, Node* next = nullptr, Node* prev = nullptr) {
 		this->data = data;
 		this->next = next;
+		this->prev = prev;
 	}
 	int getData() {
 		return data;
@@ -17,11 +19,18 @@ public:
 	void setData(int data) {
 		this->data = data;
 	}
-	
+
 	Node* getNext() {
 		return next;
 	}
 	void setNext(Node* data) {
+		next = data;
+	}
+
+	Node* getPrev() {
+		return next;
+	}
+	void setPrev(Node* data) {
 		next = data;
 	}
 };
@@ -34,35 +43,35 @@ public:
 	void Example_1(int data) {
 		if (head == nullptr) {
 			head = new Node(data);
-			Node* temp = new Node(data);
 		}
 		else {
 			Node* current = head;
+			Node* temp;
 			while (current->getNext() != nullptr) {
 				current = current->getNext();
 			}
-			Node* temp = current;
 			current->setNext(new Node(data));
-			temp->setNext(new Node(data));
+			temp = current;
+			current = current->getNext();
+			current->setPrev(temp);
 		}
 	}
 	void Example_2(int data, int i) {
 		Node* current = head;
 		Node* temp = new Node(data);
-		Node* current2 = head;
+		Node* current2;
 		int j = 1;
 		if (i == 1)
 		{
 			temp->setNext(current);
 			head = temp;
-			temp->setNext(head);
 		}
 		else {
 			while ((current->getNext() != nullptr)) {
 				if (i == j)
 				{
-					current2->setNext(temp);
-					temp->setNext(current2);
+					current2->setPrev(temp);
+					temp->setPrev(current);
 					break;
 				}
 				else
@@ -79,14 +88,17 @@ public:
 		Node* temp;
 		if (current->getData() == data)
 		{
-			delete head;
+			temp = head;
+			head = head->getNext();
+			delete temp;
 		}
 		else {
 			while (current->getNext() != nullptr) {
 				if (current->getNext()->getData() == data) {
-					delete temp;
+					temp->setNext(current->getPrev());
+					delete current;
 				}
-				else{
+				else {
 					temp = current;
 					current = current->getNext();
 				}
@@ -96,15 +108,17 @@ public:
 	void Example_4(int data) {
 		Node* current = head;
 		Node* temp;
-		if (head->getData() == data){
-			head->setNext(current);
+		Node* prev;
+		if (head->getData() == data) {
+			temp = head;
 		}
-		int j = 0;	
-		while (current->getNext() != nullptr){
+		j = 0;
+		while (current->getNext() != nullptr) {
 			current = current->getNext();
 		}
-		current->setNext(new Node(data));
-		head->setNext(current);		
+		prev = current->getPrev();
+		delete current;
+		prev->setNext(new Node(data));
 	}
 	SinglyLinkedList() {
 		this->head = nullptr;
@@ -116,6 +130,7 @@ public:
 			head = head->getNext();
 			delete temp;
 		}
+		cout << "im working" << endl;
 	}
 };
 int main()

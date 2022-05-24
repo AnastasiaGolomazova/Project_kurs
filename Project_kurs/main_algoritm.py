@@ -7,15 +7,17 @@ from node import Node
 class Analysiator():
 
     global_data = {}
+    type = "single"
 
     # инициализация анализатора
-    def __init__(self, json, list_object):
+    def __init__(self, json, list_object, type):
         self.json_file = json
         self.head = json["list_ptr_name"]
         self.get_next = json["get_next"]
         self.set_next = json["set_next"]
         self.get_prev = json["get_prev"]
         self.set_prev = json["set_prev"]
+        self.type = type
         self.list_object = list_object
         
 
@@ -39,8 +41,9 @@ class Analysiator():
         if self.checkNULL(self.lines) == False: # специальная проверка для методов, которые создают новый список узлов
         
             self.environment = {self.head:1}
-            self.memory = {1:Node(1)}
-            self.log('<1,None>', f'+<{self.environment[self.head]},{self.head}>')
+            self.memory = {1:Node(1,type=self.type)}
+            self.line = ""
+            self.log(self.memory[1], f'+<{self.environment[self.head]},{self.head}>')
         else:
             self.environment = {}
             self.memory = {}
@@ -90,8 +93,6 @@ class Analysiator():
             self.line = self.lines[index]
             self.number = vector_path[index+1]
 
-            line = self.line
-
             # ситуация, если мы объявляем указатель and ситуация, 
             # если мы объявляем указатель и присваиваем значение
             if self.contains(['*', "="]): 
@@ -99,8 +100,8 @@ class Analysiator():
 
                 if self.contains(["new"]):
                     environment[ptrs.left] = new_num
-                    memory[new_num] = Node(new_num)
-                    self.log(f'<{new_num},{memory[new_num].number}>', f'+<{environment[ptrs.left]},{ptrs.left}>')
+                    memory[new_num] = Node(new_num, type=self.type)
+                    self.log(memory[new_num], f'+<{environment[ptrs.left]},{ptrs.left}>')
                     new_num+=1
                 else:
                     environment[ptrs.left] = environment[ptrs.right[:-1]]
@@ -124,8 +125,8 @@ class Analysiator():
             elif self.contains(['new', head]): 
                 #if self.checkNULL(self.lines) == False: # специальная проверка для методов, которые создают новый список узлов
                 environment[head] = new_num
-                memory[new_num] = Node(new_num)
-                self.log(f'<{new_num},{memory[new_num].number}>', f'+<{environment[head]},{head}>')
+                memory[new_num] = Node(new_num, type=self.type)
+                self.log(memory[new_num], f'+<{environment[head]},{head}>')
                 new_num+=1
 
             # ситуация, если мы хотим выделить новый узел и добавить его в список
@@ -134,9 +135,10 @@ class Analysiator():
                 #max_node = max(Memory.values()) ПОДУМАТЬ
                 #if Environment[left_ptr] == None:
                 old_ptr = environment[left]
-                environment[left] = new_num
-                node = Node(new_num)
+                #environment[left] = new_num
+                node = Node(new_num, type=self.type)
                 memory[old_ptr].next = node
+                node.previous = memory[old_ptr]
                 memory[new_num] = node
 
                 self.log(memory = memory[new_num])         
@@ -149,9 +151,9 @@ class Analysiator():
             elif self.contains(['new']): 
                 left = self.get_ptrs(' ', 0, None).left
                 environment[left] = new_num
-                memory[new_num] = Node(new_num)
+                memory[new_num] = Node(new_num, type=self.type)
 
-                self.log(f'<{new_num},{memory[new_num].number}>', f'+<{environment[left]},{left}>')
+                self.log(memory[new_num], f'+<{environment[left]},{left}>')
                 new_num += 1
                     
             # ситуация, если мы приравниваем указатель к getNext другого указателя
@@ -161,24 +163,23 @@ class Analysiator():
                 #right = split[2][:index]
                 left= ptrs.left
                 n = environment[left]
-                node = Node(new_num)
+                node = Node(new_num, type=self.type)
                 if n is not None:
                     if memory[n].next == None:
                         environment[left] = new_num
                         memory[n].next = node
+                        node.previous = memory[n]
                         memory[new_num] = node
                         self.log(memory[n], f'+<{environment[left]},{left}>', canDublicate=True)
                         self.log(memory[new_num], f'+<{environment[left]},{left}>', canDublicate=True)
                         new_num += 1
                     else:
-                        environment[left] = memory[n].number
+                        environment[left] = memory[n].next.number
                         n = environment[left]
                         self.log(memory[n], f'+<{environment[left]},{left}>', canDublicate=True)
                 else:
                     environment[left] = new_num
-                    memory[n].next = node
                     memory[new_num] = node
-                    self.log(memory[n], f'+<{environment[left]},{left}>', canDublicate=True)
                     self.log(memory[new_num], f'+<{environment[left]},{left}>', canDublicate=True)
                     new_num += 1
 
@@ -195,9 +196,13 @@ class Analysiator():
                 index = ptrs.right.index('(')
                 left_number = environment[ptrs.left]
                 right_number = environment[ptrs.right[index + 1:]]
-                memory[left_number] = memory[right_number]
-
-                self.log(memory = f'<{left_number},{memory[left_number].number}>')
+                if memory[right_number].next is not None:
+                    memory[left_number].next = memory[right_number].next
+                else: 
+                    memory[left_number].next = Node(new_num, type=self.type)
+                    memory[left_number].next.previous = memory[left_number]
+                    new_num+=1
+                self.log(memory = memory[left_number])
 
             # ситуация, если мы хотим выделить новый узел и добавить его в список
             elif self.contains([self.set_next]): 
@@ -205,13 +210,20 @@ class Analysiator():
                 index = ptrs.right.index('(')
                 left_number = environment[ptrs.left]
                 right_number = environment[ptrs.right[index+1:-2]]
-                memory[left_number].next = self.find(right_number)
+                result = self.find(right_number)
+                memory[left_number].next = result
+                result.previous = memory[left_number]
 
-                self.log(memory = f'<{left_number},{memory[left_number].number}>')
+                self.log(memory = memory[left_number])
 
-            #elif self.contains([self.get_prev, "="]):
-                #ptrs_main = self.get_ptrs("=", 0, 1)
-                #ptrs_right = self.get_ptrs("=", 0, 1)            
+            elif self.contains([self.set_prev, "->"]):
+                ptrs = self.get_ptrs("->", 0, 1)
+                index = ptrs.right.index('(')
+                right = ptrs.right[index+1:-2]
+                left_num = environment[ptrs.left]
+                right_num = environment[right]
+                memory[left_num].previous = memory[right_num]
+                self.log(memory[left_num])       
 
 
             self.log()

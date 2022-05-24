@@ -84,7 +84,7 @@ public:
 			while (current->getNext() != nullptr) {
 				if (current->getNext()->getData() == data) {
 					temp->setNext(current->getNext());
-					delete current;
+					delete temp;
 				}
 				else{
 					temp = head;
