@@ -45,16 +45,14 @@ analysator = main_algoritm.Analysiator(data, readed_structures, data["type"])
 analysator.set_data("path_ex1")
 analysator.analysis()
 
+analysator.set_data("path_ex2")
+analysator.analysis()
 
+analysator.set_data("path_ex3")
+analysator.analysis()
 
-#analysator.set_data("path_ex2")
-#analysator.analysis()
-
-#analysator.set_data("path_ex3")
-#analysator.analysis()
-
-#analysator.set_data("path_ex4")
-#analysator.analysis()
+analysator.set_data("path_ex4")
+analysator.analysis()
 
 data = pandas.DataFrame({'Memory':[], 'Environment':[], 'Line':[], 'Current line':[], 'Message': []})
 for table in analysator.global_data.values():

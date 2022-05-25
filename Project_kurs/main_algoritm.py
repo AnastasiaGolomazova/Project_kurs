@@ -1,5 +1,6 @@
 from asyncio.windows_events import NULL
 from msilib.schema import Environment
+from tkinter import E
 from black import validate_regex
 import pandas
 from node import Node
@@ -107,6 +108,11 @@ class Analysiator():
                     environment[ptrs.left] = environment[ptrs.right[:-1]]
                     self.log(environment = f'+<{environment[ptrs.left]},{ptrs.left}>')
 
+            elif self.contains(['*']) and self.contains(['='], True):
+                ptrs = self.get_ptrs(' ', 1, 1)
+                left = ptrs.left[:-1]
+                environment[left] = None
+
             # ситуация, если мы хотим удалить указатель
             elif self.contains(['delete']): 
                 right = self.get_ptrs(' ', None, 1).right[:-1]
@@ -183,6 +189,26 @@ class Analysiator():
                     self.log(memory[new_num], f'+<{environment[left]},{left}>', canDublicate=True)
                     new_num += 1
 
+            elif self.contains([self.set_next, self.get_prev]):
+                ptrs = self.get_ptrs('->', 0, 1)
+                index = ptrs.right.index('(')
+                right = ptrs.right[index+1:]
+
+                left_node = environment[ptrs.left]
+                right_node = environment[right] 
+
+                memory[left_node].next = memory[right_node].previous;
+
+            elif self.contains(self.get_prev):
+                ptrs = self.get_ptrs(' ', 0, 2)
+                index = ptrs.right.index('->')
+                right = ptrs.right[:index]
+
+                left_node = environment[ptrs.left]
+                right_node = environment[right]
+
+                environment[ptrs.left] = memory[right_node].previous.number
+
             # ситуация, если мы хотим присвоить значение указателя к другому
             elif self.contains(['=']) and self.contains(["=="], True): 
                 ptrs = self.get_ptrs(' ', 0, 2)
@@ -215,6 +241,9 @@ class Analysiator():
                 result.previous = memory[left_number]
 
                 self.log(memory = memory[left_number])
+
+                if self.type == "double":
+                    self.log(memory = result, canDublicate=True)
 
             elif self.contains([self.set_prev, "->"]):
                 ptrs = self.get_ptrs("->", 0, 1)
@@ -287,8 +316,14 @@ class Analysiator():
                 if link != "":
                     two_elements = link.split(',')
                     #if two_elements[1][:-1] != 'None':
-                    left_number = two_elements[0][1:]
-                    rigth_number = two_elements[1][:-1]
+                    
+                    if self.type=="single":
+                        left_number = two_elements[0][1:]
+                        rigth_number = two_elements[1][:-1]
+                    else:
+                        left_number = two_elements[1]
+                        rigth_number = two_elements[2][:-1]      
+
                     #or left_number == str(imposter)
                     if rigth_number == str(imposter) or (left_number == str(imposter) and rigth_number == "None" and count != 0):
                         #if two_elements[1][:-1] != 'None':

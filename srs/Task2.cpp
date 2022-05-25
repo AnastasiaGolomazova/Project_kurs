@@ -54,6 +54,7 @@ public:
 			temp = current;
 			current = current->getNext();
 			current->setPrev(temp);
+			head = head->getNext();
 		}
 	}
 	void Example_2(int data, int i) {
@@ -63,8 +64,7 @@ public:
 		int j = 1;
 		if (i == 1)
 		{
-			temp->setNext(current);
-			head = temp;
+			temp->setNext(head);
 		}
 		else {
 			while ((current->getNext() != nullptr)) {
@@ -76,6 +76,7 @@ public:
 				}
 				else
 				{
+					head = head->getNext();
 					current2 = current;
 					current = current->getNext();
 					j++;
@@ -90,16 +91,15 @@ public:
 		{
 			temp = head;
 			head = head->getNext();
-			delete temp;
 		}
 		else {
 			while (current->getNext() != nullptr) {
 				if (current->getNext()->getData() == data) {
 					temp->setNext(current->getPrev());
 					delete current;
-					break;
 				}
 				else {
+					head = head->getNext();
 					temp = current;
 					current = current->getNext();
 				}
@@ -112,14 +112,16 @@ public:
 		Node* prev;
 		if (head->getData() == data) {
 			temp = head;
+			head = head->getNext();
 		}
-		int j = 0;
+		j = 0;
 		while (current->getNext() != nullptr) {
 			current = current->getNext();
 		}
 		prev = current->getPrev();
 		delete current;
 		prev->setNext(new Node(data));
+		head = head->getNext();
 	}
 	SinglyLinkedList() {
 		this->head = nullptr;
@@ -138,3 +140,4 @@ int main()
 {
 	return 0;
 }
+
