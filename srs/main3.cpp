@@ -100,7 +100,7 @@ public:
 			temp = head;
 			head = new Node(data);
 		}
-		j = 0;	
+		int j = 0;	
 		while (current->getNext() != nullptr){
 			current = current->getNext();
 		}

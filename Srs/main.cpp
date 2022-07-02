@@ -98,7 +98,7 @@ public:
 		if (head->getData() == data){
 			temp = head;
 		}
-		j = 0;	
+		int j = 0;	
 		while (current->getNext() != nullptr){
 			current = current->getNext();
 		}
